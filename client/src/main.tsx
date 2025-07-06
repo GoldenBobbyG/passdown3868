@@ -6,8 +6,8 @@ import App from './App.tsx'; // Change from .jsx to .tsx
 import Dashboard from './pages/Dashboard.tsx';
 import Signup from './pages/Signup.tsx';
 import Login from './pages/Login';
-import YardHealth from './pages/YardHealth.tsx';
-import { Profile } from './pages/Profile.tsx';
+import YardHealth from './pages/Yardhealth.tsx';
+import Profile from './pages/Profile.tsx';
 import ShiftLog from './pages/ShiftLog.tsx';
 import ErrorPage from './pages/error.tsx';
 

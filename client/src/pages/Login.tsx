@@ -1,12 +1,12 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { Login as LOGIN_MUTATION } from '../utils/mutations';
+import { LOGIN_USER } from '../utils/mutations'; // Changed from 'Login as LOGIN_MUTATION'
 import Auth from '../utils/auth';
 
 const Login = () => {
   const [formState, setFormState] = useState({ email: '', password: '' });
-  const [login, { error, data }] = useMutation(LOGIN_MUTATION);
+  const [login, { error, data }] = useMutation(LOGIN_USER); // Changed from LOGIN_MUTATION
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
