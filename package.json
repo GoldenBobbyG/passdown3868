@@ -1,7 +1,14 @@
 {
   "dependencies": {
     "bootstrap": "^5.3.7",
+    "dotenv": "^17.0.1",
+    "mongoose": "^8.16.1",
     "react-bootstrap": "^2.10.10",
     "react-router-dom": "^7.6.3"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^24.0.10"
   }
 }

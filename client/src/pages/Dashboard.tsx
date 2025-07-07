@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, type JSXElementConstructor, type Key, type ReactElement, type ReactNode, type ReactPortal } from "react";
+import { useQuery } from '@apollo/client';
+import { QUERY_RECENT_SHIFTS, QUERY_ME } from '../utils/queries';
+import { Link } from 'react-router-dom';
 import Auth from '../utils/auth';
 
 type LateDeparture = {
@@ -44,6 +47,13 @@ const Dashboard = () => {
   }
 
   const userProfile = Auth.getProfile();
+  
+  // Fetch recent shifts for dashboard overview
+  const { loading, data } = useQuery(QUERY_RECENT_SHIFTS, {
+    variables: { limit: 1 }
+  });
+
+  const recentShifts = data?.recentShifts || [];
 
   const [shift, setShift] = useState("Day");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -226,6 +236,43 @@ const Dashboard = () => {
           />
         </div>
         <p className="mt-2"><strong>Yard Accuracy:</strong> {yardAccuracy}%</p>
+      </div>
+
+      {/* Recent Shifts Overview */}
+      <div className="card mt-4">
+        <div className="card-header">
+          <h4>Recent Shifts</h4>
+        </div>
+        <div className="card-body">
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Shift</th>
+                    <th>Completion</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentShifts.map((shift: { _id: Key | null | undefined; date: string | number | Date; shift: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; completedTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; totalTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
+                    <tr key={shift._id}>
+                      <td>{new Date(shift.date).toLocaleDateString()}</td>
+                      <td>{shift.shift}</td>
+                      <td>{shift.completedTasks}/{shift.totalTasks}</td>
+                      <td>
+                        <Link to={`/shiftlog/${shift._id}`}>View Details</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
