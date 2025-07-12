@@ -1,18 +1,16 @@
 {
-  "dependencies": {
-    "@types/graphql": "^14.2.3",
-    "bootstrap": "^5.3.7",
-    "dotenv": "^17.2.0",
-    "graphql": "^16.11.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.1",
-    "react-bootstrap": "^2.10.10",
-    "react-router-dom": "^7.6.3"
+  "name": "passdown3868",
+  "version": "1.0.0",
+  "scripts": {
+    "install-deps": "cd server && npm i && cd ../client && npm i",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "seed": "cd server && npm run seed"
   },
   "devDependencies": {
-    "@types/dotenv": "^6.1.1",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/mongoose": "^5.11.96",
-    "@types/node": "^24.0.10"
+    "concurrently": "^8.2.2"
   }
 }
