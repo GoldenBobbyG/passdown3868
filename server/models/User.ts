@@ -1,7 +1,17 @@
-const { Schema, model } = require('mongoose');
-const bcrypt = require('bcrypt');
+import mongoose, { Schema, model, Document, } from 'mongoose';
+import bcrypt from 'bcrypt';
 
-const userSchema = new Schema({
+interface IUser extends Document {
+  username: string;
+  email: string;
+  password: string;
+  department?: string;
+  role?: 'Team Member' | 'Supervisor' | 'Manager' | 'Admin';
+  shiftHistory?: mongoose.Types.ObjectId[];
+  isCorrectPassword(password: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>({
   username: {
     type: String,
     required: true,
@@ -27,29 +37,20 @@ const userSchema = new Schema({
     type: String,
     enum: ['Team Member', 'Supervisor', 'Manager', 'Admin'],
     default: 'Team Member',
-  },
-  shiftHistory: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'ShiftLog',
-    },
-  ],
-}, {
-  timestamps: true,
+  }
 });
-
-userSchema.pre('save', async function (next) {
+userSchema.pre<IUser>('save', async function (next) {
   if (this.isNew || this.isModified('password')) {
     const saltRounds = 10;
     this.password = await bcrypt.hash(this.password, saltRounds);
   }
+  
   next();
 });
-
-userSchema.methods.isCorrectPassword = async function (password) {
+userSchema.methods.isCorrectPassword = async function (password: string): Promise<boolean> {
   return bcrypt.compare(password, this.password);
 };
 
-const User = model('User', userSchema);
+const User = model<IUser>('User', userSchema);
 
 export default User;
