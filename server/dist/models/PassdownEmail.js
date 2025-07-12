@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+import { Schema, model } from 'mongoose';
 const passdownEmailSchema = new Schema({
     shiftLog: {
         type: Schema.Types.ObjectId,

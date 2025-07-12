@@ -1,21 +1,45 @@
-import db from '../config/connection'
-import {  User,ShiftLog,YardHealth,PassdownEmail } from '../models/index';
-import cleanDB from './cleanDB';
+import db from '../config/connection.js';
+import { User, ShiftLog } from '../models/index.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-import userData from './userData.json' assert { type: 'json' };
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const seedDatabase = async (): Promise<void> => {
-    try {
-        await db();
-        await cleanDB();
+// Read JSON file synchronously
+const userDataPath = path.join(__dirname, 'userData.json');
+const userData = JSON.parse(readFileSync(userDataPath, 'utf8'));
 
-        await User.create(userData);
-        console.log('Database seeded successfully with user data.');
+(async () => {
+  try {
+    const connection = await db();
+    connection.once('open', async () => {
+      try {
+        console.log('🔄 Starting database seeding...');
+        
+        await User.deleteMany({});
+        console.log('🗑️ Cleared existing data');
+
+        const users = await User.create(userData);
+        const usersArray = Array.isArray(users) ? users : [users];
+        console.log(`✅ Created ${usersArray.length} users`);
+
+        console.log('\n📋 Login Credentials:');
+        usersArray.forEach(user => {
+          console.log(`${user.email} | password123`);
+        });
+
         process.exit(0);
-    } catch (error) {
-        console.error('Error seeding database:', error);
+      } catch (err) {
+        console.error('❌ Error seeding database:', err);
         process.exit(1);
-    }
-};
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error connecting to database:', err);
+    process.exit(1);
+  }
+})
 
-seedDatabase();
+();
