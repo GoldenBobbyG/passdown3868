@@ -1,5 +1,6 @@
-// backend/schema/typeDefs.ts
- const typeDefs = `
+import { gql } from 'graphql-tag'; 
+
+const typeDefs = gql`
   # ========== SCALAR TYPES ==========
   scalar Date
 
