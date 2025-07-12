@@ -13,7 +13,7 @@ const userData = JSON.parse(readFileSync(userDataPath, 'utf8'));
 
 (async () => {
   try {
-    const connection = await db();
+    const connection = db;
     connection.once('open', async () => {
       try {
         console.log('🔄 Starting database seeding...');

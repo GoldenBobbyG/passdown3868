@@ -8,8 +8,8 @@ import Signup from './pages/Signup.tsx';
 import Login from './pages/Login';
 import YardHealth from './pages/Yardhealth.tsx';
 import Profile from './pages/Profile.tsx';
-import ShiftLog from './pages/ShiftLog.tsx';
-import ErrorPage from './pages/error.tsx';
+import ShiftLog from './pages/Shiftlog.tsx';
+import ErrorPage from './pages/Error.tsx';
 
 const router = createBrowserRouter([
   {
