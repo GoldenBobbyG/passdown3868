@@ -8,7 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Read JSON file synchronously
-const userDataPath = path.join(__dirname, 'userData.json');
+// Read from source directory, not dist directory
+const userDataPath = path.join(__dirname, '../../seeds/userData.json'); // Go back to source
 const userData = JSON.parse(readFileSync(userDataPath, 'utf8'));
 
 (async () => {

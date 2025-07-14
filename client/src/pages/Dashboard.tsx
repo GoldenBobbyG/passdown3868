@@ -1,6 +1,6 @@
 import { useState, type JSXElementConstructor, type Key, type ReactElement, type ReactNode, type ReactPortal } from "react";
 import { useQuery } from '@apollo/client';
-import { QUERY_RECENT_SHIFTS, QUERY_ME } from '../utils/queries.js';
+import { QUERY_RECENT_SHIFTS } from '../utils/queries.js';
 import { Link } from 'react-router-dom';
 import Auth from '../utils/auth';
 

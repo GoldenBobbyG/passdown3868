@@ -6,74 +6,73 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import http from 'http';
-
+import mongoose from 'mongoose'; // Import mongoose directly
 import { typeDefs, resolvers } from './schemas/index.js';
 import { authenticateToken } from './utils/auth.js';
-import db from './config/connection.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const PORT = process.env.PORT || 3001;
 
-// Define the context type
 interface MyContext {
   user?: any;
 }
 
 const startApolloServer = async () => {
-  const app = express();
-  const httpServer = http.createServer(app);
-  
-  const server = new ApolloServer<MyContext>({
-    typeDefs,
-    resolvers,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  });
+  try {
+    // ✅ FIXED: Connect to database directly with await
+    console.log('📡 Connecting to database...');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/passdown3868');
+    console.log('✅ Database connected successfully');
 
-  await server.start();
-
-  // Body parsing middleware for non-GraphQL routes
-  app.use(express.urlencoded({ extended: false }));
-
-  // ✅ FIXED: Create middleware separately with explicit typing
-  const graphqlMiddleware = expressMiddleware(server, {
-    context: async ({ req }) => authenticateToken({ req })
-  });
-
-  app.use(
-    '/graphql',
-    cors<cors.CorsRequest>({
-      origin: ['http://localhost:3000', 'http://localhost:5173'],
-      credentials: true,
-    }),
-    express.json(),
-    graphqlMiddleware
-  );
-
-  // Serve static files in production
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/dist')));
-
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    const app = express();
+    const httpServer = http.createServer(app);
+    
+    const server = new ApolloServer<MyContext>({
+      typeDefs,
+      resolvers,
+      plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     });
-  }
 
-  // ✅ FIXED: Use httpServer for listening instead of app directly
-  db.once('open', () => {
+    await server.start();
+    console.log('✅ Apollo Server started');
+
+    // Body parsing middleware
+    app.use(express.urlencoded({ extended: false }));
+
+    // GraphQL middleware
+    const graphqlMiddleware = expressMiddleware(server, {
+      context: async ({ req }) => authenticateToken({ req })
+    });
+
+    app.use(
+      '/graphql',
+      cors<cors.CorsRequest>({
+        origin: ['http://localhost:3000', 'http://localhost:5173'],
+        credentials: true,
+      }),
+      express.json(),
+      graphqlMiddleware
+    );
+
+    // Serve static files in production
+    if (process.env.NODE_ENV === 'production') {
+      app.use(express.static(path.join(__dirname, '../client/dist')));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+      });
+    }
+
+    // ✅ FIXED: Start server immediately after setup
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server ready at http://localhost:${PORT}`);
       console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`);
     });
-  });
 
-  db.on('error', (error) => {
-    console.error('❌ Database connection error:', error);
-  });
+  } catch (error) {
+    console.error('❌ Error starting server:', error);
+    process.exit(1);
+  }
 };
 
-startApolloServer().catch(error => {
-  console.error('❌ Error starting server:', error);
-  process.exit(1);
-});
+startApolloServer();
