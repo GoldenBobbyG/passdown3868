@@ -2,16 +2,22 @@
     {
         "username": "JollyGuru",
         "email": "jolly@guru.com",
-        "password": "password"
+        "password": "password",
+        "role": "Admin",
+        "department": "Yard Operations"
     },
     {
         "username": "SunnyScribe",
         "email": "sunny@scribe.com",
-        "password": "password"
+        "password": "password",
+        "role": "Supervisor",
+        "department": "Yard Operations"
     },
     {
         "username": "RadiantComet",
         "email": "radiant@comet.com",
-        "password": "password"
+        "password": "password",
+        "role": "Team Member",
+        "department": "Yard Operations"
     }
 ]
