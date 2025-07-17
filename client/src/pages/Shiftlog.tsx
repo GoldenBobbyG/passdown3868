@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client";
 import { ADD_SHIFT_LOG } from "../utils/mutations";
 import Auth from "../utils/auth";
-
+// This type defines the structure of a shift log entry
 type SafetyEvent = {
     trend: string;
     incidents: string;
@@ -38,7 +38,7 @@ const initialChecks: YCRoutineChecks = {
     yardAuditsDone: false,
     carrierEmptyEmailSent: false,
 };
-
+// This component renders the shift log form and handles submission
 export default function ShiftLog() {
     // Check if user is logged in
     if (!Auth.loggedIn()) {

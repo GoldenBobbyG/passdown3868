@@ -4,6 +4,9 @@ import { QUERY_YARD_HEALTH } from "../utils/queries";
 import { ADD_YARD_HEALTH } from "../utils/mutations";
 import { Form, Row, Col, Button, Card, Alert, Spinner } from "react-bootstrap";
 
+// This interface defines the structure of the yard health data
+// It includes properties for various yard metrics such as storeLDO, ibFreight, etc
+// Each property is a number representing the count or value of that metric
 export interface YardData {
   storeLDO: number;
   ibFreight: number;
@@ -17,7 +20,9 @@ export interface YardData {
   rejectedFreight: number;
   // Add your other properties here
 }
-
+// This type defines the keys of the YardData interface
+// It allows us to reference the keys of YardData dynamically
+// For example, we can use YardDataKey to type a variable that holds a key of YardData
 export type YardDataKey = keyof YardData;
 
 const initialHealthState = {
@@ -26,7 +31,8 @@ const initialHealthState = {
   emptyIBT: 0, loadedIBT: 0, goodPallet: 0, badWoodPallet: 0,
   csvPOD: 0, sweep: 0, udcSweeps: 0, rejectedFreight: 0
 };
-
+// This is the initial state for the yard health data
+// It sets all properties to 0, which is a common starting point for numeric data
 const YardHealth = () => {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [shift, setShift] = useState("Day");
@@ -44,11 +50,12 @@ const YardHealth = () => {
   const handleChange = (key:string, value:number) => {
     setYardData({ ...yardData, [key]: value });
   };
-
+// This function handles changes to the yard data input fields
   const totalTrailers = Object.values(yardData).reduce((sum, val) => sum + Number(val || 0), 0);
   const yardUtilization = totalSpaces ? ((totalTrailers / totalSpaces) * 100).toFixed(1) : "0";
   const yardAccuracy = totalTrailers ? (((totalTrailers - auditDefects) / totalTrailers) * 100).toFixed(1) : "N/A";
-
+// This calculates the total number of trailers, yard utilization percentage, and yard accuracy percentage
+  // totalTrailers is the sum of all values in yardData
   const handleSubmit = async () => {
     try {
       await submitYardHealth({
@@ -68,7 +75,8 @@ const YardHealth = () => {
       console.error("Submission failed:", error);
     }
   };
-
+// This function handles the submission of the yard health report
+  // It uses the submitYardHealth mutation to send the data to the server
   if (queryLoading) return <Spinner animation="border" />;
   if (queryError) return <Alert variant="danger">Error loading yard data.</Alert>;
 

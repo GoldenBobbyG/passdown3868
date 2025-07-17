@@ -1,5 +1,6 @@
 import { Schema, model }  from 'mongoose';
 
+// this commit yardDataSchema defines the structure of the yard data
 const yardDataSchema = new Schema({
   storeLDO: { type: Number, default: 0 },
   ibFreight: { type: Number, default: 0 },
