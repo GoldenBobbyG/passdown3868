@@ -4,6 +4,7 @@ import { QUERY_RECENT_SHIFTS } from '../utils/queries.js';
 import { Link } from 'react-router-dom';
 import Auth from '../utils/auth';
 
+// This commit adds a dashboard page that includes: Late Departures, Yard Health, Safety Trends, Major Callouts, and Recent Shifts.
 type LateDeparture = {
   loadId: string;
   store: string;
@@ -39,7 +40,7 @@ type YardData = {
   udcSweeps: number;
   rejectedFreight: number;
 };
-
+// This commit completes the dashboard page with functionality to manage late departures, yard health, safety trends, major callouts, and recent shifts.
 const Dashboard = () => {
   // Check if user is logged in
   if (!Auth.loggedIn()) {
@@ -52,7 +53,9 @@ const Dashboard = () => {
   const { loading, data } = useQuery(QUERY_RECENT_SHIFTS, {
     variables: { limit: 1 }
   });
-
+// If no data is returned, use an empty array
+  // This ensures that recentShifts is always defined
+  // and avoids potential errors when mapping over it.
   const recentShifts = data?.recentShifts || [];
 
   const [shift, setShift] = useState("Day");
@@ -78,13 +81,14 @@ const Dashboard = () => {
   });
   const [auditDefects, setAuditDefects] = useState(0);
   const totalYardSpaces = 200; // Set based on yard capacity
-
+// This commit calculates yard utilization and accuracy based on the yard data.
+  // Calculate total trailers and utilization
   const totalTrailers = Object.values(yardData).reduce((acc, val) => acc + Number(val || 0), 0);
   const yardUtilization = ((totalTrailers / totalYardSpaces) * 100).toFixed(1);
   const yardAccuracy = totalTrailers === 0
     ? "N/A"
     : (((totalTrailers - auditDefects) / totalTrailers) * 100).toFixed(1);
-
+// This commit adds functionality to update late departures, add new rows, and manage yard health inputs.
   const updateLateDeparture = (
     i: number,
     field: keyof LateDeparture,
@@ -98,7 +102,7 @@ const Dashboard = () => {
   const addDepartureRow = () => {
     setLateDepartures([...lateDepartures, { loadId: "", store: "", trailer: "", critical: "", actual: "", reason: "" }]);
   };
-
+// This commit is the welcome message and main structure of the dashboard page.
   return (
     <div className="container-fluid p-4">
       <main>
@@ -260,7 +264,7 @@ const Dashboard = () => {
                 <tbody>
                   {recentShifts.map((shift: { _id: Key | null | undefined; date: string | number | Date; shift: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; completedTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; totalTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
                     <tr key={shift._id}>
-                      <td>{new Date(shift.date).toLocaleDateString()}</td>
+                      <td className="text-center align-middle">{new Date(shift.date).toLocaleDateString()}</td>
                       <td>{shift.shift}</td>
                       <td>{shift.completedTasks}/{shift.totalTasks}</td>
                       <td>

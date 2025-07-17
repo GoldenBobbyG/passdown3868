@@ -2,7 +2,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import { QUERY_USER, QUERY_ME } from '../utils/queries';
 import Auth from '../utils/auth';
-
+// This commit imports necessary modules and defines the Profile component
 const Profile = () => {
     const { username: userParam } = useParams();
 
@@ -10,9 +10,9 @@ const Profile = () => {
         variables: userParam ? { username: userParam } : undefined,
         fetchPolicy: 'network-only',
     });
-
+// This commit uses useQuery to fetch user data based on the username parameter
     const user = data?.me || data?.user || {};
-
+// This commit destructures the user data from the query response
     if (
         Auth.loggedIn() &&
         userParam &&
@@ -24,7 +24,7 @@ const Profile = () => {
     if (loading) {
         return <div>Loading...</div>;
     }
-
+// This commit handles the loading state of the query and if the user is logged in and viewing their own profile, it redirects them to the '/me' route.
     if (!user?.username) {
         return (
             <h4>

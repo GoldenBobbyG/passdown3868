@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 
+// This commit defines the schema for PassdownEmail, which is used to store information about emails sent to managers regarding shift logs.
 const passdownEmailSchema = new Schema({
   shiftLog: {
     type: Schema.Types.ObjectId,

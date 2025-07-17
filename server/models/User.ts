@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, Document, } from 'mongoose';
 import bcrypt from 'bcrypt';
-
+// This commit defines the interface for the User model, which includes properties like username, email, password, department, role, and shiftHistory.
 interface IUser extends Document {
   username: string;
   email: string;
@@ -39,6 +39,8 @@ const userSchema = new Schema<IUser>({
     default: 'Team Member',
   }
 });
+
+// This commit adds a pre-save hook to the userSchema to hash the password before saving it to the database.
 userSchema.pre<IUser>('save', async function (next) {
   if (this.isNew || this.isModified('password')) {
     const saltRounds = 10;
@@ -47,6 +49,7 @@ userSchema.pre<IUser>('save', async function (next) {
   
   next();
 });
+// This commit adds a method to the userSchema to check if the provided password matches the hashed password stored in the database.
 userSchema.methods.isCorrectPassword = async function (password: string): Promise<boolean> {
   return bcrypt.compare(password, this.password);
 };

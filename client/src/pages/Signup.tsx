@@ -5,15 +5,17 @@ import { useMutation } from '@apollo/client';
 import { ADD_USER } from '../utils/mutations';
 
 import Auth from '../utils/auth';
-
+// This component handles user signup for the 3868 Pass Down application
 const Signup = () => {
   const [formState, setFormState] = useState({
     username: '',
     email: '',
     password: '',
   });
+  // This mutation is used to add a new user
+  // It uses the ADD_USER mutation defined in the mutations file
   const [addUser, { error, data }] = useMutation(ADD_USER);
-
+// This mutation is used to handle user signup
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
@@ -22,7 +24,7 @@ const Signup = () => {
       [name]: value,
     });
   };
-
+// This function handles the form submission for user signup
   const handleFormSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
@@ -36,7 +38,8 @@ const Signup = () => {
       console.error(e);
     }
   };
-
+// This component renders the signup form and handles user input
+  // It displays a success message if the user is created successfully
   return (
     <main className="d-flex justify-content-center mb-4">
       <div className="col-12 col-lg-6 col-md-8">

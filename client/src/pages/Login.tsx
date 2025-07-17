@@ -3,20 +3,20 @@ import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { LOGIN_USER } from '../utils/mutations'; // Changed from 'Login as LOGIN_MUTATION'
 import Auth from '../utils/auth';
-
+// This commits the login function 
 const Login = () => {
   const [formState, setFormState] = useState({ email: '', password: '' });
   const [login, { error, data }] = useMutation(LOGIN_USER); // Changed from LOGIN_MUTATION
-
+// This commits the login mutation to handle user login
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-
+// This commits the handleChange function to update form state
     setFormState({
       ...formState,
       [name]: value,
     });
   };
-
+// This commits the handleFormSubmit function to handle form submission
   const handleFormSubmit = async (event: FormEvent) => {
     event.preventDefault();
     console.log(formState);
@@ -24,7 +24,7 @@ const Login = () => {
       const { data } = await login({
         variables: { ...formState },
       });
-
+// This commits the login mutation to authenticate the user
       Auth.login(data.login.token);
     } catch (e) {
       console.error(e);
@@ -35,7 +35,7 @@ const Login = () => {
       password: '',
     });
   };
-
+// This commits the main structure of the login page
   return (
     <main className="d-flex justify-content-center mb-4">
       <div className="col-12 col-lg-6 col-md-8">
