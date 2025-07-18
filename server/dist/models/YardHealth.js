@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+// This commit defines the schema for YardHealth, which is used to store yard health data including trailer counts, utilization, accuracy, and late departures.
 const yardHealthSchema = new Schema({
     date: {
         type: Date,

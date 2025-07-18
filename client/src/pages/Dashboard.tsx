@@ -241,6 +241,11 @@ const Dashboard = () => {
         </div>
         <p className="mt-2"><strong>Yard Accuracy:</strong> {yardAccuracy}%</p>
       </div>
+      <div className="mt-6">
+
+      
+        <button>Send Dashboard to Email</button>
+      </div>
 
       {/* Recent Shifts Overview */}
       <div className="card mt-4">
