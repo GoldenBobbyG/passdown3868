@@ -28,6 +28,7 @@ const userSchema = new Schema({
         default: 'Team Member',
     }
 });
+// This commit adds a pre-save hook to the userSchema to hash the password before saving it to the database.
 userSchema.pre('save', async function (next) {
     if (this.isNew || this.isModified('password')) {
         const saltRounds = 10;
@@ -35,6 +36,7 @@ userSchema.pre('save', async function (next) {
     }
     next();
 });
+// This commit adds a method to the userSchema to check if the provided password matches the hashed password stored in the database.
 userSchema.methods.isCorrectPassword = async function (password) {
     return bcrypt.compare(password, this.password);
 };

@@ -15,6 +15,9 @@ const Header = () => {
           <Link className="text-light" to="/">
             <h1 className="m-0">3868 Pass Down</h1>
           </Link>
+          <Link className="container flex-row justify-space-between-lg justify-center align-center" to={'/shiftlog'}>
+            <h2>Shift Log</h2>
+            </Link>
           <p className="m-0">Shift Pass Down</p>
         </div>
         <div>
