@@ -1,8 +1,9 @@
-import { useState, type JSXElementConstructor, type Key, type ReactElement, type ReactNode, type ReactPortal } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from '@apollo/client';
 import { QUERY_RECENT_SHIFTS } from '../utils/queries.js';
 import { Link } from 'react-router-dom';
 import Auth from '../utils/auth';
+import html2canvas from 'html2canvas';
 
 // This commit adds a dashboard page that includes: Late Departures, Yard Health, Safety Trends, Major Callouts, and Recent Shifts.
 type LateDeparture = {
@@ -102,149 +103,232 @@ const Dashboard = () => {
   const addDepartureRow = () => {
     setLateDepartures([...lateDepartures, { loadId: "", store: "", trailer: "", critical: "", actual: "", reason: "" }]);
   };
+
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<string>('');
+
+  const sendDashboardEmail = async () => {
+    if (!dashboardRef.current) return;
+
+    setIsSending(true);
+    setEmailStatus('Capturing dashboard...');
+
+    try {
+      // Capture the dashboard as an image
+      const canvas = await html2canvas(dashboardRef.current, {
+        background: '#ffffff',
+        logging: false,
+        useCORS: true,
+      });
+
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          throw new Error('Failed to create image');
+        }
+
+        setEmailStatus('Sending email...');
+
+        // Create FormData to send image
+        const formData = new FormData();
+        formData.append('image', blob, 'dashboard.png');
+        formData.append('userEmail', userProfile?.data?.email || '');
+        formData.append('username', userProfile?.data?.username || '');
+        formData.append('date', date);
+        formData.append('shift', shift);
+
+        // Send to backend
+        const response = await fetch('http://localhost:3001/api/send-dashboard-image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setEmailStatus('✅ Dashboard sent successfully!');
+          setTimeout(() => setEmailStatus(''), 3000);
+        } else {
+          throw new Error(result.error || 'Failed to send email');
+        }
+      }, 'image/png');
+
+    } catch (error) {
+      console.error('Error sending dashboard:', error);
+      setEmailStatus('❌ Failed to send dashboard');
+      setTimeout(() => setEmailStatus(''), 3000);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
 // This commit is the welcome message and main structure of the dashboard page.
   return (
     <div className="container-fluid p-4">
-      <main>
-        <div className="flex-row justify-center">
-          <div className="col-12 col-md-10 mb-3 p-3" style={{ border: '1px dotted #1a1a1a' }}>
-            <h2>Welcome back, {userProfile?.data?.username}!</h2>
-            <h3>Current Shift Status</h3>
-            {/* Your shift turnover content */}
+      {/* Wrap the content you want to capture in the ref */}
+      <div ref={dashboardRef} style={{ backgroundColor: '#CC0000', padding: '100px' }}>
+        <main>
+          <div className="flex-row justify-center">
+            <div className="col-12 col-md-10 mb-3 p-3" style={{ border: '1px dotted #1a1a1a' }}>
+              <h2>Welcome back, {userProfile?.data?.username}!</h2>
+              <h3>Current Shift Status</h3>
+              {/* Your shift turnover content */}
+            </div>
+          </div>
+        </main>
+
+        {/* Shift and Date Selection */}
+        <div className="flex items-center gap-4">
+          <label>
+            Shift:
+            <select value={shift} onChange={e => setShift(e.target.value)} className="border p-2 rounded ml-2">
+              <option value="Day">Day</option>
+              <option value="Night">Night</option>
+            </select>
+          </label>
+          <label>
+            Date:
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="border p-2 rounded ml-2"
+            />
+          </label>
+        </div>
+
+        {/* Safety Trends and Major Callout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block font-semibold">Safety Trends</label>
+            <textarea
+              className="w-full border p-2 rounded"
+              value={safetyTrends}
+              onChange={e => setSafetyTrends(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block font-semibold">Major Callout</label>
+            <textarea
+              className="w-full border p-2 rounded"
+              value={majorCallout}
+              onChange={e => setMajorCallout(e.target.value)}
+            />
           </div>
         </div>
-      </main>
 
-      {/* Shift and Date Selection */}
-      <div className="flex items-center gap-4">
-        <label>
-          Shift:
-          <select value={shift} onChange={e => setShift(e.target.value)} className="border p-2 rounded ml-2">
-            <option value="Day">Day</option>
-            <option value="Night">Night</option>
-          </select>
-        </label>
-        <label>
-          Date:
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="border p-2 rounded ml-2"
-          />
-        </label>
-      </div>
-
-      {/* Safety Trends and Major Callout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Late Departures Table */}
         <div>
-          <label className="block font-semibold">Safety Trends</label>
-          <textarea
-            className="w-full border p-2 rounded"
-            value={safetyTrends}
-            onChange={e => setSafetyTrends(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block font-semibold">Major Callout</label>
-          <textarea
-            className="w-full border p-2 rounded"
-            value={majorCallout}
-            onChange={e => setMajorCallout(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Late Departures Table */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Late Departures</h2>
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-200">
-            <tr>
-              <th>Load ID</th>
-              <th>Store #</th>
-              <th>Trailer #</th>
-              <th>Critical Time</th>
-              <th>Actual Time</th>
-              <th>Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lateDepartures.map((row, i) => (
-              <tr key={i} className="border-t">
-                {(Object.keys(row) as (keyof LateDeparture)[]).map(field => (
-                  <td key={field}>
-                    <input
-                      className="w-full border p-1"
-                      value={row[field]}
-                      onChange={e => updateLateDeparture(i, field, e.target.value)}
-                    />
-                  </td>
-                ))}
+          <h2 className="text-xl font-semibold mb-2">Late Departures</h2>
+          <table className="w-full border text-sm">
+            <thead className="bg-gray-200">
+              <tr>
+                <th>Load ID</th>
+                <th>Store #</th>
+                <th>Trailer #</th>
+                <th>Critical Time</th>
+                <th>Actual Time</th>
+                <th>Reason</th>
               </tr>
+            </thead>
+            <tbody>
+              {lateDepartures.map((row, i) => (
+                <tr key={i} className="border-t">
+                  {(Object.keys(row) as (keyof LateDeparture)[]).map(field => (
+                    <td key={field}>
+                      <input
+                        className="w-full border p-1"
+                        value={row[field]}
+                        onChange={e => updateLateDeparture(i, field, e.target.value)}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={addDepartureRow} className="mt-2 bg-blue-600 text-white px-4 py-1 rounded">+ Add Row</button>
+        </div>
+
+        {/* YC Routines */}
+        <div>
+          <h2 className="text-xl font-semibold">YC Routines</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.keys(ycRoutines).map(key => (
+              <label key={key} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={ycRoutines[key as keyof YcRoutines]}
+                  onChange={() => setYcRoutines({ ...ycRoutines, [key]: !ycRoutines[key as keyof YcRoutines] })}
+                />
+                {key.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase())}
+              </label>
             ))}
-          </tbody>
-        </table>
-        <button onClick={addDepartureRow} className="mt-2 bg-blue-600 text-white px-4 py-1 rounded">+ Add Row</button>
-      </div>
+          </div>
+        </div>
 
-      {/* YC Routines */}
-      <div>
-        <h2 className="text-xl font-semibold">YC Routines</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {Object.keys(ycRoutines).map(key => (
-            <label key={key} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={ycRoutines[key as keyof YcRoutines]}
-                onChange={() => setYcRoutines({ ...ycRoutines, [key]: !ycRoutines[key as keyof YcRoutines] })}
-              />
-              {key.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase())}
-            </label>
-          ))}
+        {/* Yard Health Inputs */}
+        <div>
+          <h2 className="text-xl font-semibold">Yard Health</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.keys(yardData).map(field => (
+              <div key={field}>
+                <label className="block capitalize">{field.replace(/([A-Z])/g, " $1")}</label>
+                <input
+                  type="number"
+                  className="w-full border p-2"
+                  value={yardData[field as keyof YardData]}
+                  onChange={e => setYardData({ ...yardData, [field]: Number(e.target.value) })}
+                  min="0"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Yard Health Calculations */}
+        <div className="mt-6 p-4 bg-white rounded shadow-md">
+          <h3 className="text-lg font-bold mb-2">Live Yard Stats</h3>
+          <p><strong>Total Trailers:</strong> {totalTrailers}</p>
+          <p><strong>Yard Utilization:</strong> {yardUtilization}% of {totalYardSpaces} spots</p>
+          <div className="mt-2">
+            <label className="block font-semibold">Audit Defects</label>
+            <input
+              type="number"
+              className="border p-2 rounded"
+              value={auditDefects}
+              onChange={e => setAuditDefects(Number(e.target.value))}
+              min="0"
+            />
+          </div>
+          <p className="mt-2"><strong>Yard Accuracy:</strong> {yardAccuracy}%</p>
         </div>
       </div>
 
-      {/* Yard Health Inputs */}
-      <div>
-        <h2 className="text-xl font-semibold">Yard Health</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.keys(yardData).map(field => (
-            <div key={field}>
-              <label className="block capitalize">{field.replace(/([A-Z])/g, " $1")}</label>
-              <input
-                type="number"
-                className="w-full border p-2"
-                value={yardData[field as keyof YardData]}
-                onChange={e => setYardData({ ...yardData, [field]: Number(e.target.value) })}
-                min="0"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Yard Health Calculations */}
-      <div className="mt-6 p-4 bg-white rounded shadow-md">
-        <h3 className="text-lg font-bold mb-2">Live Yard Stats</h3>
-        <p><strong>Total Trailers:</strong> {totalTrailers}</p>
-        <p><strong>Yard Utilization:</strong> {yardUtilization}% of {totalYardSpaces} spots</p>
-        <div className="mt-2">
-          <label className="block font-semibold">Audit Defects</label>
-          <input
-            type="number"
-            className="border p-2 rounded"
-            value={auditDefects}
-            onChange={e => setAuditDefects(Number(e.target.value))}
-            min="0"
-          />
-        </div>
-        <p className="mt-2"><strong>Yard Accuracy:</strong> {yardAccuracy}%</p>
-      </div>
-      <div className="mt-6">
-
-      
-        <button>Send Dashboard to Email</button>
+      {/* Email controls outside the captured area */}
+      <div className="mt-6 text-center">
+        <button
+          onClick={sendDashboardEmail}
+          disabled={isSending}
+          className="btn btn-lg"
+          style={{
+            backgroundColor: '#CC0000',
+            borderColor: '#000000',
+            color: 'white',
+            minWidth: '200px'
+          }}
+        >
+          {isSending ? 'Sending...' : 'Send Dashboard to Email'}
+        </button>
+        
+        {emailStatus && (
+          <div className="mt-2">
+            <span className={emailStatus.includes('✅') ? 'text-success' : emailStatus.includes('❌') ? 'text-danger' : 'text-info'}>
+              {emailStatus}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Recent Shifts Overview */}
@@ -267,9 +351,11 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentShifts.map((shift: { _id: Key | null | undefined; date: string | number | Date; shift: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; completedTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; totalTasks: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }) => (
+                  {recentShifts.map((shift: any) => (
                     <tr key={shift._id}>
-                      <td className="text-center align-middle">{new Date(shift.date).toLocaleDateString()}</td>
+                      <td className="text-center align-middle">
+                        {new Date(shift.date).toLocaleDateString()}
+                      </td>
                       <td>{shift.shift}</td>
                       <td>{shift.completedTasks}/{shift.totalTasks}</td>
                       <td>
