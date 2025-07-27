@@ -9,6 +9,8 @@ import http from 'http';
 import mongoose from 'mongoose'; // Import mongoose directly
 import { typeDefs, resolvers } from './schemas/index.js';
 import { authenticateToken } from './utils/auth.js';
+import sendPdfRoute from './routes/sendPdf.js'; // Add this import
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +41,10 @@ const startApolloServer = async () => {
 
     // Body parsing middleware
     app.use(express.urlencoded({ extended: false }));
+    app.use(express.json());
+
+    // Add the email route BEFORE GraphQL middleware
+    app.use('/api', sendPdfRoute);
 
     // GraphQL middleware
     const graphqlMiddleware = expressMiddleware(server, {
@@ -63,10 +69,10 @@ const startApolloServer = async () => {
       });
     }
 
-    // ✅ FIXED: Start server immediately after setup
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server ready at http://localhost:${PORT}`);
       console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`);
+      console.log(`📧 Email API: http://localhost:${PORT}/api/send-dashboard-image`);
     });
 
   } catch (error) {
