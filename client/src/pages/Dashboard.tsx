@@ -43,13 +43,17 @@ type YardData = {
 };
 // This commit completes the dashboard page with functionality to manage late departures, yard health, safety trends, major callouts, and recent shifts.
 const Dashboard = () => {
-  // Check if user is logged in
-  if (!Auth.loggedIn()) {
-    return <div>Please log in to view your dashboard.</div>;
-  }
-
   const userProfile = Auth.getProfile();
   
+  // ✅ FIXED: Extract user data correctly
+  const userData = userProfile?.data;
+  const username = userData?.username || userData?.email?.split('@')[0] || 'User';
+  
+  // Debug: Remove this after testing
+  console.log('User Profile:', userProfile);
+  console.log('User Data:', userData);
+  console.log('Username:', username);
+
   // Fetch recent shifts for dashboard overview
   const { loading, data } = useQuery(QUERY_RECENT_SHIFTS, {
     variables: { limit: 1 }
@@ -81,7 +85,7 @@ const Dashboard = () => {
     csvPOD: 0, sweep: 0, udcSweeps: 0, rejectedFreight: 0
   });
   const [auditDefects, setAuditDefects] = useState(0);
-  const totalYardSpaces = 200; // Set based on yard capacity
+  const totalYardSpaces = 738; // Set based on yard capacity
 // This commit calculates yard utilization and accuracy based on the yard data.
   // Calculate total trailers and utilization
   const totalTrailers = Object.values(yardData).reduce((acc, val) => acc + Number(val || 0), 0);
@@ -133,8 +137,9 @@ const Dashboard = () => {
         // Create FormData to send image
         const formData = new FormData();
         formData.append('image', blob, 'dashboard.png');
-        formData.append('userEmail', userProfile?.data?.email || '');
-        formData.append('username', userProfile?.data?.username || '');
+        // ✅ FIXED: Use userData instead of userProfile.data
+        formData.append('userEmail', userData?.email || '');
+        formData.append('username', userData?.username || '');
         formData.append('date', date);
         formData.append('shift', shift);
 
@@ -167,16 +172,18 @@ const Dashboard = () => {
   return (
     <div className="container-fluid p-4">
       {/* Wrap the content you want to capture in the ref */}
-      <div ref={dashboardRef} style={{ backgroundColor: '#CC0000', padding: '100px' }}>
-        <main>
-          <div className="flex-row justify-center">
-            <div className="col-12 col-md-10 mb-3 p-3" style={{ border: '1px dotted #1a1a1a' }}>
-              <h2>Welcome back, {userProfile?.data?.username}!</h2>
-              <h3>Current Shift Status</h3>
-              {/* Your shift turnover content */}
+      <div ref={dashboardRef} style={{ backgroundColor: 'white', padding: '20px', color: 'black' }}>
+        <div className="row justify-content-center mb-4">
+          <div className="col-12 col-md-10 p-3" style={{ border: '1px dotted #1a1a1a' }}>
+            <h2 className="text-center" style={{ color: '#CC0000' }}>3868 Pass Down Dashboard</h2>
+            {/* ✅ FIXED: Use the extracted username */}
+            {/* <h3 className="text-center">Welcome back, {username}!</h3> */}
+            <div className="text-center">
+              <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+              <p><strong>User:</strong> {userData?.email}</p>
             </div>
           </div>
-        </main>
+        </div>
 
         {/* Shift and Date Selection */}
         <div className="flex items-center gap-4">
