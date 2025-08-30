@@ -4,6 +4,7 @@ import { QUERY_RECENT_SHIFTS } from '../utils/queries.js';
 import { Link } from 'react-router-dom';
 import Auth from '../utils/auth';
 import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 // This commit adds a dashboard page that includes: Late Departures, Yard Health, Safety Trends, Major Callouts, and Recent Shifts.
 type LateDeparture = {
@@ -168,7 +169,46 @@ const Dashboard = () => {
     }
   };
 
-// This commit is the welcome message and main structure of the dashboard page.
+  // Add a ref for the file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handler for button click to open file dialog
+  const handleUploadButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+// Handler for file upload to import yard health data
+const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    // Assume first sheet contains the yard health data
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+
+    // Map CSV/Excel rows to your yard health fields
+    // Example row: [fieldName, value]
+    let newYardData = { ...yardData };
+    jsonData.forEach((row) => {
+      const key = row[0];
+      const value = Number(row[1]);
+      // Only update if the key exists in yardData
+      if (key && key in yardData) {
+        newYardData[key as keyof YardData] = value;
+      }
+    });
+    setYardData(newYardData);
+  };
+
+  reader.readAsArrayBuffer(file);
+};
+
   return (
     <div className="container-fluid p-4">
       {/* Wrap the content you want to capture in the ref */}
@@ -375,6 +415,28 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Upload Button for CSV/Excel */}
+      <div className="mb-4">
+        <label htmlFor="yard-health-upload" className="form-label">
+          Upload Yard Health CSV/Excel:
+        </label>
+        <input
+          type="file"
+          id="yard-health-upload"
+          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+          className="form-control"
+          onChange={handleFileUpload}
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={handleUploadButtonClick}
+          className="btn btn-primary"
+        >
+          Upload Files
+        </button>
       </div>
     </div>
   );
