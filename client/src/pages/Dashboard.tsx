@@ -191,18 +191,88 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    console.log('YardData jsonData:', jsonData); // <-- Add this line
 
     // Map CSV/Excel rows to your yard health fields
     // Example row: [fieldName, value]
+    // let newYardData = { ...yardData };
+    // jsonData.forEach((row) => {
+    //   const key = row[0];
+    //   const value = Number(row[1]);
+    //   // Only update if the key exists in yardData
+    //   if (key && key in yardData) {
+    //     newYardData[key as keyof YardData] = value;
+    //   }
+    // });
+    // setYardData(newYardData);
+
+    // Find the header row (look for "Load Type, Spot Name")
+    const headerRowIndex = jsonData.findIndex(row =>
+      row.includes("Load Type") && row.includes("Spot Name")
+    );
+    if (headerRowIndex === -1) return;
+
+    const headers = jsonData[headerRowIndex];
+    const loadTypeIdx = headers.indexOf("Load Type");
+    const spotNameIdx = headers.indexOf("Spot Name");
+
+    // Count occurrences for each yardData key
     let newYardData = { ...yardData };
-    jsonData.forEach((row) => {
-      const key = row[0];
-      const value = Number(row[1]);
-      // Only update if the key exists in yardData
-      if (key && key in yardData) {
-        newYardData[key as keyof YardData] = value;
+    const yardKeys: (keyof YardData)[] = Object.keys(yardData) as (keyof YardData)[];
+
+
+    const loadTypeMap: Record<string, keyof YardData> = {
+      "IB Freight": "ibFreight",
+      "Empty Carrier Trailers": "emptyOTR",
+      "Bad Wood": "badWoodPallet",
+      "Good Wood": "goodPallet",
+      "Empty IBT": "emptyIBT",
+      "Loaded IBT": "loadedIBT",
+      "Rejected Freight": "rejectedFreight",
+      "Store Delivery": "storeLDO",
+      "Empty Store Delivery Trailers": "emptyTarget",
+      "UDC": "udcTrailers",
+      "UDC Sweep": "udcSweeps",
+      "RPC - Sweep w/o Compost": "csvPOD",
+      "RPC Only - Sweeps w/o compost": "sweep",
+      "Fulfillment": "emptyFulfillment",
+      "Fulfillment_1": "ldoFulfillment",
+      "OSV": "osvPM",
+
+    };
+
+    // Reset all counts
+    yardKeys.forEach(key => { newYardData[key] = 0; });
+
+    // Loop through each trailer row after the header
+    for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      const loadType = row[loadTypeIdx];
+      const spotName = row[spotNameIdx];
+
+      let key: keyof YardData | undefined = undefined;
+
+      // --- Use partial matching for ambiguous cases ---
+      if (spotName && typeof spotName === "string") {
+        if (spotName.includes("Empty Carrier Trailers")) {
+          key = "emptyOTR";
+        } else if (spotName.includes("Empty Store Delivery Trailers")) {
+          key = "emptyTarget";
+        } else if (spotName.includes("TFC Trailers")) {
+          key = "ldoFulfillment";
+        }
       }
-    });
+
+      // Fallback to Load Type mapping if not matched above
+      if (!key && loadType && loadTypeMap[loadType]) {
+        key = loadTypeMap[loadType];
+      }
+
+      if (key) {
+        newYardData[key]++;
+      }
+    }
+
     setYardData(newYardData);
   };
 
